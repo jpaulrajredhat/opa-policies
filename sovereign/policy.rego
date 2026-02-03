@@ -1,62 +1,48 @@
-package sovereign.data_access
+package sovereign.policytest
 
 default allow = false
 
-# ------------------------
-# ACTION DERIVATION
-# ------------------------
+# =============================
+# INPUT CONTRACT
+# =============================
+# input.user.department
+# input.user.deployment
+# input.user.sovereign_region
+# input.user.training_allowed
+# input.resource.catalog
+# input.resource.schema
+# input.resource.table
+# input.action  (read | train)
 
-is_read {
-  input.operation == "SelectFromColumns"
-}
-
-is_write {
-  input.operation == "InsertIntoTable"
-}
-
-# ------------------------
-# BASE ACCESS
-# ------------------------
-
+# =============================
+# RULE: READ DATA
+# =============================
 allow {
-  is_read
-  same_domain
-  purpose_allowed
+  input.action == "read"
+
+  input.user.department == input.resource.schema
+  input.user.sovereign_region == data_region[input.resource.table]
 }
 
-same_domain {
-  input.identity.groups[_] == input.context.jwt.claims.department
+# =============================
+# RULE: MODEL TRAINING
+# =============================
+allow {
+  input.action == "train"
+
+  input.user.training_allowed == true
+  input.user.deployment == "fraud-ml"
+
+  input.user.sovereign_region == data_region[input.resource.table]
 }
 
-purpose_allowed {
-  input.context.jwt.claims.purpose == "model_training"
+# =============================
+# TABLE → REGION MAP
+# (could come from OPAL data sync later)
+# =============================
+data_region := {
+  "transactions_eu": "IN",
+  "transactions_eu": "EU",
+  "transactions_us": "US"
 }
 
-# ------------------------
-# SOVEREIGN ROW FILTER
-# ------------------------
-
-row_filter = expr {
-  is_read
-  region := input.context.jwt.claims.sovereign_region
-  expr := sprintf("region = '%s'", [region])
-}
-
-# ------------------------
-# COLUMN MASKING
-# ------------------------
-
-column_mask["amount"] = "NULL" {
-  is_read
-  input.context.jwt.claims.clearance != "high"
-}
-
-# ------------------------
-# MODEL TRAINING GUARD
-# ------------------------
-
-deny_reason := msg {
-  is_read
-  input.context.jwt.claims.purpose != "model_training"
-  msg := "Access denied: purpose not allowed for training"
-}
