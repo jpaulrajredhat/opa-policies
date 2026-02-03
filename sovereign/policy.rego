@@ -1,4 +1,4 @@
-package trino.access
+package sovereign.data_access
 
 default allow = false
 
