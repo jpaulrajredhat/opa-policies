@@ -10,10 +10,13 @@ is_read { input.action.operation == "SelectFromColumns" }
 is_execute { input.action.operation == "ExecuteQuery" }
 # is_metadata { input.action.operation == "AccessCatalog" }
 is_metadata { 
-    ops := {"AccessCatalog", "AccessSchema", "AccessTable","ShowCatalogs"}
+    ops := {
+        "AccessCatalog", "AccessSchema", "AccessTable", 
+        "FilterCatalogs", "FilterSchemas", "FilterTables",
+        "ShowCatalogs"
+    }
     ops[input.action.operation]
 }
-
 
 # --- Base Access ---
 allow { is_execute }
