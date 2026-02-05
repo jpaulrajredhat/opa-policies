@@ -1,5 +1,8 @@
 package sovereign.data_access
 
+# This is required for the "some group in ..." syntax
+import future.keywords.in
+
 default allow = false
 
 # --- Helpers ---
