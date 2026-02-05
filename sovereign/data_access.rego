@@ -6,17 +6,28 @@ default allow = false
 # ACTION DERIVATION
 # ------------------------
 
+# Fix: Trino sends this as input.action.operation
 is_read {
-  input.operation == "SelectFromColumns"
+  input.action.operation == "SelectFromColumns"
 }
 
 is_write {
-  input.operation == "InsertIntoTable"
+  input.action.operation == "InsertIntoTable"
+}
+
+# Fix: You MUST allow ExecuteQuery or the query never starts
+is_execute {
+  input.action.operation == "ExecuteQuery"
 }
 
 # ------------------------
 # BASE ACCESS
 # ------------------------
+
+# Allow the initial query handshake
+allow {
+  is_execute
+}
 
 allow {
   is_read
@@ -24,8 +35,9 @@ allow {
   purpose_allowed
 }
 
+# Fix: Based on your log, identity is inside context
 same_domain {
-  input.identity.groups[_] == input.context.jwt.claims.department
+  input.context.identity.groups[_] == input.context.jwt.claims.department
 }
 
 purpose_allowed {
@@ -51,12 +63,3 @@ column_mask["amount"] = "NULL" {
   input.context.jwt.claims.clearance != "high"
 }
 
-# ------------------------
-# MODEL TRAINING GUARD
-# ------------------------
-
-deny_reason := msg {
-  is_read
-  input.context.jwt.claims.purpose != "model_training"
-  msg := "Access denied: purpose not allowed for training"
-}
