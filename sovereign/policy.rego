@@ -41,7 +41,7 @@ allow {
 # (could come from OPAL data sync later)
 # =============================
 data_region := {
-  "transactions_eu": "IN",
+  "transactions_in": "IN",
   "transactions_eu": "EU",
   "transactions_us": "US"
 }
