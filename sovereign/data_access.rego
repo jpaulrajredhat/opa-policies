@@ -75,22 +75,21 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-############################
-# COLUMN MASKS (single rule, admin bypass)
-############################
-
-column_masks[{"expression": expr}] {
+column_masks := {"expression": mask_expr} {
+    # 1. This matches (from your Trino logs)
     input.action.operation == "GetColumnMask"
+    
+    # 2. Print EVERYTHING before any logic checks
+    print("DEBUG | User:", input.context.identity.user)
+    print("DEBUG | Is Admin?:", is_admin)
+    print("DEBUG | Column Name:", input.action.resource.column.columnName)
 
-    # Admin bypass → skip producing masks
-    not is_admin
+    # 3. Logic checks (Execution stops here if user is admin)
+    not is_admin 
 
-    col := input.action.resource.column.columnName
-
-    # Masks for specific columns
-    expr := {
-        "card_number": "concat('****-****-****-', substr(card_number, length(card_number)-3, 4))",
-        "customer_id": "to_hex(sha256(cast(customer_id as varchar)))",
-        "fraud_flag": "NULL"
-    }[col]
+    # 4. Target column check
+    target_columns := {"card_number", "customer_id", "fraud_flag"}
+    target_columns[input.action.resource.column.columnName]
+    
+    mask_expr := "'****'"
 }
