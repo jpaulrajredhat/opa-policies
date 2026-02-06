@@ -69,12 +69,15 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-# Using := instead of [] ensures we return ONE object, not a list
+# --- Column Masks (Single Value Assignment) ---
+# If this rule is 'undefined' (e.g. for admin), Trino applies NO mask.
 column_masks := {"expression": mask_expr} {
     input.action.operation == "GetColumnMask"
+    
+    # 1. EXCLUDE ADMIN
     not is_admin 
 
-    # Targeted Masking
+    # 2. TARGET SPECIFIC COLUMNS
     target_columns := {"card_number", "customer_id", "fraud_flag"}
     target_columns[input.action.resource.column.columnName]
     
