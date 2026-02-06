@@ -69,20 +69,17 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-column_masks[{"expression": mask_expr}] {
+# Using := instead of [] ensures we return ONE object, not a list
+column_masks := {"expression": mask_expr} {
     input.action.operation == "GetColumnMask"
-    not is_admin  # Admin sees raw data; others see masks
+    not is_admin 
 
     # Targeted Masking
     target_columns := {"card_number", "customer_id", "fraud_flag"}
     target_columns[input.action.resource.column.columnName]
     
-    mask_expr := "'****-****-****-****'"
-
-    # input.action.resource.column.columnName == "card_number"
-    # mask_expr := "'****-****-****-****'"
+    mask_expr := "'****'"
 }
-
 
 is_admin {
   input.context.identity.user == "admin"
