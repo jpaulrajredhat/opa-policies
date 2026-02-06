@@ -76,7 +76,7 @@ row_filters[{"expression": expr}] {
 }
 
 #  Define the sensitive columns
-target_columns := {"card_number", "customer_id", "fraud_flag"}
+target_columns := {"card_number", "customer_id"}
 
 #  Complete Column Masking Logic using 'else'
 # This rule is "Complete" (assigned with :=), so only one block will ever run.
