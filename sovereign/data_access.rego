@@ -16,7 +16,11 @@ table_filter_columns := {
 }
 
 # --- Helpers ---
-is_read { input.action.operation == "SelectFromColumns" }
+# is_read { input.action.operation == "SelectFromColumns" }
+is_read { 
+    ops := {"SelectFromColumns", "GetRowFilters"}
+    ops[input.action.operation]
+}
 is_execute { input.action.operation == "ExecuteQuery" }
 
 is_metadata { 
@@ -45,7 +49,7 @@ allow {
 
 # --- Multiple Catalog Row Filter ---
 row_filters[{"expression": expr}] {
-    # is_read
+    is_read
 
     not is_admin 
     # 1. Construct the full path
