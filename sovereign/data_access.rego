@@ -45,7 +45,7 @@ allow {
 
 # --- Multiple Catalog Row Filter ---
 row_filters[{"expression": expr}] {
-    is_read
+    # is_read
 
     not is_admin 
     # 1. Construct the full path
