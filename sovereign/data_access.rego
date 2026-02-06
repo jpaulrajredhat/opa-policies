@@ -75,7 +75,7 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-target_columns := {"card_number", "customer_id", "fraud_flag"}
+target_columns := {"card_number", "customer_id"}
 
 # RULE 1: Apply the Mask
 # Triggers ONLY for non-admins on sensitive columns
