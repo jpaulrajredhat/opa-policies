@@ -64,10 +64,13 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-# --- Column Masking ---
-column_mask["amount"] = "NULL" {
-    is_read
+column_masks[{"expression": mask_expr}] {
+    input.action.operation == "GetColumnMask"
+    
+    # Optional: Example mask for 'card_number'
+    input.action.resource.column.columnName == "card_number"
     input.context.identity.user != "admin"
+    mask_expr := "concat('****-****-****-', substring(card_number, 13, 4))"
 }
 
 # --- Column Masking ---
