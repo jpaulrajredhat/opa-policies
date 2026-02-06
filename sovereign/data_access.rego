@@ -5,6 +5,17 @@ import future.keywords.in
 
 default allow = false
 
+# --- 1. Table-to-Column Mapping ---
+# Define which column should be used for filtering on each table
+# Format: "tableName": "filterColumn"
+table_filter_columns := {
+    # "loans": "region",
+    # "us_customers": "property_state",
+    # "eu_transactions": "country_code"
+    "credit_card_transactions_combined": "region"
+    
+}
+
 # --- Helpers ---
 is_read { input.action.operation == "SelectFromColumns" }
 is_execute { input.action.operation == "ExecuteQuery" }
@@ -34,20 +45,39 @@ allow {
 }
 
 # --- Sovereign Row Filter ---
+# row_filter = expr {
+#    is_read
+#    # 1. Find the group that contains the region (e.g., "/fraud/IN")
+#    some group in input.context.identity.groups
+#    startswith(group, "/fraud/")
+    
+#    # 2. Extract "IN" by splitting "/fraud/IN" into ["", "fraud", "IN"]
+#    parts := split(group, "/")
+#    region := parts[2] 
+    
+#   # 3. Apply the filter
+#    expr := sprintf("region = '%s'", [region])
+#}
+
+# ---  Dynamic Row Filter ---
 row_filter = expr {
     is_read
-    # 1. Find the group that contains the region (e.g., "/fraud/IN")
+    
+    # A) Identify the table being queried
+    table_name := input.action.resource.table.tableName
+    
+    # B) Get the correct column for this table from our map
+    filter_column := table_filter_columns[table_name]
+    
+    # C) Extract the region value from the group (e.g., "/fraud/IN" -> "IN")
     some group in input.context.identity.groups
     startswith(group, "/fraud/")
-    
-    # 2. Extract "IN" by splitting "/fraud/IN" into ["", "fraud", "IN"]
     parts := split(group, "/")
-    region := parts[2] 
+    region_value := parts[2]
     
-    # 3. Apply the filter
-    expr := sprintf("region = '%s'", [region])
+    # D) Build the SQL: "region = 'IN'" or "property_state = 'IN'"
+    expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
-
 # --- Column Masking ---
 column_mask["amount"] = "NULL" {
     is_read
