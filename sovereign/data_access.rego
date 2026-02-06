@@ -2,7 +2,7 @@ package sovereign.data_access
 
 # This is required for the "some group in ..." syntax
 import future.keywords.in
-import future.keywords.if
+# import future.keywords.if
 
 default allow = false
 
@@ -44,24 +44,23 @@ allow {
 }
 
 # --- Multiple Catalog Row Filter ---
-row_filters contains {"expression": expr} if {
+row_filters[{"expression": expr}] {
     is_read
     
-    # A) Construct the full path from the Trino resource object
-    # Based on your log: input.action.resource.table.catalogName, etc.
+    # 1. Construct the full path
     res := input.action.resource.table
     full_path := sprintf("%s.%s.%s", [res.catalogName, res.schemaName, res.tableName])
     
-    # B) Lookup the column for THIS specific catalog/table
+    # 2. Lookup column
     filter_column := table_filter_columns[full_path]
     
-    # C) Extract region (e.g., "/fraud/IN" -> "IN")
+    # 3. Extract region
     some group in input.context.identity.groups
     startswith(group, "/fraud/")
     parts := split(group, "/")
     region_value := parts[2]
     
-    # D) Build the SQL
+    # 4. Build SQL
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
