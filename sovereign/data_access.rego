@@ -74,13 +74,6 @@ row_filters[{"expression": expr}] {
 # ---  Column Masks (FIXED: Default to null) ---
 default column_masks = null
 
-column_masks := {"expression": mask_expr} {
-    input.action.operation == "GetColumnMask"
-    
-    # Logic to determine the expression
-    mask_expr := get_mask_expression(is_admin, input.action.resource.column.columnName)
-}
-
 column_masks := {"expression": "'****'"} {
     input.action.operation == "GetColumnMask"
 
