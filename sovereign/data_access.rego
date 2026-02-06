@@ -69,17 +69,18 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-# ---  Column Masks (Single Assignment with Default) ---
-# Setting a default of null ensures admin sees raw data without crashing
+# ---  Column Masks (FIXED: Default to null) ---
 default column_masks = null
 
 column_masks := {"expression": mask_expr} {
     input.action.operation == "GetColumnMask"
     not is_admin 
 
-    # Targeted Masking: Only mask 'card_number'
-    input.action.resource.column.columnName == "card_number"
-    mask_expr := "'****-****-****-****'"
+    # Only mask specific sensitive columns
+    target_columns := {"card_number", "customer_id", "fraud_flag"}
+    target_columns[input.action.resource.column.columnName]
+    
+    mask_expr := "'****'"
 }
 
 is_admin {
