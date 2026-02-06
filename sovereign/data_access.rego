@@ -73,11 +73,28 @@ column_masks[{"expression": mask_expr}] {
     input.action.operation == "GetColumnMask"
     not is_admin  # Admin sees raw data; others see masks
 
-    # Optional: Example mask for 'card_number'
-    # mask_expr := "concat('****-****-****-', substring(card_number, 13, 4))"
-
-    input.action.resource.column.columnName == "card_number"
+    # Targeted Masking
+    target_columns := {"card_number", "customer_id", "fraud_flag"}
+    target_columns[input.action.resource.column.columnName]
+    
     mask_expr := "'****-****-****-****'"
+
+    # input.action.resource.column.columnName == "card_number"
+    # mask_expr := "'****-****-****-****'"
+}
+
+# --- Column Masks (FIXED FOR TRINO 474) ---
+# We use a single-value rule. If no conditions match, it returns 'undefined' (null),
+# which Trino treats as "No Masking".
+column_masks := {"expression": mask_expr} {
+    input.action.operation == "GetColumnMask"
+    not is_admin 
+
+    # Targeted Masking
+    target_columns := {"card_number", "customer_id", "fraud_flag"}
+    target_columns[input.action.resource.column.columnName]
+    
+    mask_expr := "'****'"
 }
 
 is_admin {
