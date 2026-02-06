@@ -69,19 +69,17 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-# --- Column Masks (Single Value Assignment) ---
-# If this rule is 'undefined' (e.g. for admin), Trino applies NO mask.
+# ---  Column Masks (Single Assignment with Default) ---
+# Setting a default of null ensures admin sees raw data without crashing
+default column_masks = null
+
 column_masks := {"expression": mask_expr} {
     input.action.operation == "GetColumnMask"
-    
-    # 1. EXCLUDE ADMIN
     not is_admin 
 
-    # 2. TARGET SPECIFIC COLUMNS
-    target_columns := {"card_number", "customer_id", "fraud_flag"}
-    target_columns[input.action.resource.column.columnName]
-    
-    mask_expr := "'****'"
+    # Targeted Masking: Only mask 'card_number'
+    input.action.resource.column.columnName == "card_number"
+    mask_expr := "'****-****-****-****'"
 }
 
 is_admin {
