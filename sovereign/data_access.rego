@@ -75,21 +75,28 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-column_masks := {"expression": mask_expr} {
-    # 1. This matches (from your Trino logs)
+target_columns := {"card_number", "customer_id", "fraud_flag"}
+
+# RULE 1: Apply the Mask
+# Triggers ONLY for non-admins on sensitive columns
+column_masks := {"expression": "'****'"} {
     input.action.operation == "GetColumnMask"
-    
-    # 2. Print EVERYTHING before any logic checks
-    print("DEBUG | User:", input.context.identity.user)
-    print("DEBUG | Is Admin?:", is_admin)
-    print("DEBUG | Column Name:", input.action.resource.column.columnName)
-
-    # 3. Logic checks (Execution stops here if user is admin)
-    not is_admin 
-
-    # 4. Target column check
-    target_columns := {"card_number", "customer_id"}
+    not is_admin
     target_columns[input.action.resource.column.columnName]
+}
+
+# RULE 2: Return the Column (No Mask)
+# Triggers for Admins OR non-admins on safe columns
+column_masks := {"expression": col} {
+    input.action.operation == "GetColumnMask"
+    col := input.action.resource.column.columnName
     
-    mask_expr := "'****'"
+    # This helper ensures Rule 1 and Rule 2 never run at the same time
+    is_exempt(is_admin, col)
+}
+
+# Helper: Defines who is exempt from masking
+is_exempt(true, _)        # Admins are always exempt
+is_exempt(false, col) {   # Non-admins are exempt if column is not sensitive
+    not target_columns[col]
 }
