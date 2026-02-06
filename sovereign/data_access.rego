@@ -8,6 +8,10 @@ default allow = false
 
 # 1. Provide a default so 'not is_admin' is predictable
 default is_admin := false
+is_admin := true {
+    input.context.identity.user == "admin"
+}
+
 
 # --- 1. Enhanced Table-to-Column Mapping ---
 # Format: "catalogName.schemaName.tableName": "filterColumn"
@@ -71,22 +75,24 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-# ---  Column Masks (FIXED: Default to null) ---
-default column_masks = null
-
-column_masks := {"expression": "'****'"} {
+############################
+# COLUMN MASKS
+############################
+column_masks := [] {
     input.action.operation == "GetColumnMask"
+    is_admin == true
+}
 
+column_masks[{"expression": expr}] {
+    input.action.operation == "GetColumnMask"
     is_admin == false
 
-    target_columns := {"card_number", "customer_id", "fraud_flag"}
-    target_columns[input.action.resource.column.columnName]
+    col := input.action.resource.column.columnName
+
+    expr := {
+        "card_number": "concat('****-****-****-', substr(card_number, length(card_number)-3, 4))",
+        "customer_id": "to_hex(sha256(cast(customer_id as varchar)))",
+        "fraud_flag": "NULL"
+    }[col]
 }
 
-is_admin := true {
-    input.context.identity.user == "admin"
-}
-
-is_admin := false {
-    input.context.identity.user != "admin"
-}
