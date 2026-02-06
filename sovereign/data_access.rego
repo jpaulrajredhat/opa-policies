@@ -75,7 +75,7 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-# Non-admin → masked columns
+# Non-admin → produce masks
 column_masks[{"expression": expr}] {
     input.action.operation == "GetColumnMask"
     is_admin == false
@@ -89,8 +89,9 @@ column_masks[{"expression": expr}] {
     }[col]
 }
 
-# Admin → never produces anything (empty result)
-column_masks[_] {
+# Admin → never produces anything
+# Trino interprets this as empty array
+column_masks {
     input.action.operation == "GetColumnMask"
     is_admin == true
     false
