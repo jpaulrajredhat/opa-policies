@@ -11,7 +11,7 @@ default allow = false
 # Format: "catalogName.schemaName.tableName": "filterColumn"
 table_filter_columns := {
     # "iceberg.single_family.loans": "region",
-    "postgresql.public.credit_card_transactions_combined": "region"
+    "postgres.public.credit_card_transactions_combined": "region"
     # "mysql.sales.customers": "state"
 }
 
