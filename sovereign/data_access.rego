@@ -74,9 +74,14 @@ default column_masks = null
 
 column_masks := {"expression": mask_expr} {
     input.action.operation == "GetColumnMask"
+    
+    # Debug: See what is_admin actually evaluates to
+    print("Is User Admin?:", is_admin)
     not is_admin 
 
+    # Debug: See which column OPA thinks it's looking at
     # Only mask specific sensitive columns
+    print("Column Name:", input.action.resource.column.columnName)
     target_columns := {"card_number", "customer_id", "fraud_flag"}
     target_columns[input.action.resource.column.columnName]
     
