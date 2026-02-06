@@ -46,7 +46,8 @@ allow {
 # --- Multiple Catalog Row Filter ---
 row_filters[{"expression": expr}] {
     is_read
-    
+
+    not is_admin 
     # 1. Construct the full path
     res := input.action.resource.table
     full_path := sprintf("%s.%s.%s", [res.catalogName, res.schemaName, res.tableName])
