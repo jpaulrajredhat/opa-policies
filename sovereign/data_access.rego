@@ -88,7 +88,7 @@ column_masks := {"expression": mask_expr} {
     not is_admin 
 
     # 4. Target column check
-    target_columns := {"card_number", "customer_id", "fraud_flag"}
+    target_columns := {"card_number", "customer_id"}
     target_columns[input.action.resource.column.columnName]
     
     mask_expr := "'****'"
