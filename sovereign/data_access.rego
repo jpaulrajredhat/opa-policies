@@ -66,18 +66,14 @@ row_filters[{"expression": expr}] {
 
 column_masks[{"expression": mask_expr}] {
     input.action.operation == "GetColumnMask"
-    
-    # Optional: Example mask for 'card_number'
-    input.action.resource.column.columnName == "card_number"
-    input.context.identity.user != "admin"
-    mask_expr := "concat('****-****-****-', substring(card_number, 13, 4))"
-}
+    not is_admin  # Admin sees raw data; others see masks
 
-# --- Column Masking ---
-# column_mask["amount"] = "NULL" {
-#  is_read
-#  not is_admin
-#}
+    # Optional: Example mask for 'card_number'
+    # mask_expr := "concat('****-****-****-', substring(card_number, 13, 4))"
+
+    input.action.resource.column.columnName == "card_number"
+    mask_expr := "'****-****-****-****'"
+}
 
 is_admin {
   input.context.identity.user == "admin"
