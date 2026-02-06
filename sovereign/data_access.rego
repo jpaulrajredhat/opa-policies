@@ -75,22 +75,26 @@ row_filters[{"expression": expr}] {
 default column_masks = null
 
 column_masks := {"expression": mask_expr} {
-    # 1. This matches (from your Trino logs)
     input.action.operation == "GetColumnMask"
     
-    # 2. Print EVERYTHING before any logic checks
-    print("DEBUG | User:", input.context.identity.user)
-    print("DEBUG | Is Admin?:", is_admin)
-    print("DEBUG | Column Name:", input.action.resource.column.columnName)
+    # Logic to determine the expression
+    mask_expr := get_mask_expression(is_admin, input.action.resource.column.columnName)
+}
 
-    # 3. Logic checks (Execution stops here if user is admin)
-    not is_admin 
-    print("DEBUG | not an admin:", is_admin)
-    # 4. Target column check
+# --- CHANGE 3: Logic Helper ---
+# If admin, the expression is the column name itself (no masking)
+get_mask_expression(true, col_name) = col_name
+
+# If NOT admin, and it's a sensitive column, return '****'
+get_mask_expression(false, col_name) = "'****'" {
     target_columns := {"card_number", "customer_id", "fraud_flag"}
-    target_columns[input.action.resource.column.columnName]
-    
-    mask_expr := "'****'"
+    target_columns[col_name]
+}
+
+# If NOT admin, but NOT a sensitive column, return the column name itself
+get_mask_expression(false, col_name) = col_name {
+    target_columns := {"card_number", "customer_id", "fraud_flag"}
+    not target_columns[col_name]
 }
 
 is_admin {
