@@ -75,14 +75,14 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-############################
-# COLUMN MASKS
-############################
-column_masks := [] {
+# Admin → NO masks (empty set)
+column_masks[_] {
     input.action.operation == "GetColumnMask"
     is_admin == true
+    false
 }
 
+# Non-admin → masked columns
 column_masks[{"expression": expr}] {
     input.action.operation == "GetColumnMask"
     is_admin == false
@@ -95,4 +95,3 @@ column_masks[{"expression": expr}] {
         "fraud_flag": "NULL"
     }[col]
 }
-
