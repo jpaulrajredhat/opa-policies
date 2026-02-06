@@ -75,6 +75,10 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
+############################
+# COLUMN MASKS (TRINO + OPAL SAFE)
+############################
+
 # Non-admin → produce masks
 column_masks[{"expression": expr}] {
     input.action.operation == "GetColumnMask"
