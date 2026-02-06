@@ -81,22 +81,19 @@ column_masks := {"expression": mask_expr} {
     mask_expr := get_mask_expression(is_admin, input.action.resource.column.columnName)
 }
 
-# --- CHANGE 3: Logic Helper ---
-# If admin, the expression is the column name itself (no masking)
-get_mask_expression(true, col_name) = col_name
+column_masks := {"expression": "'****'"} {
+    input.action.operation == "GetColumnMask"
 
-# If NOT admin, and it's a sensitive column, return '****'
-get_mask_expression(false, col_name) = "'****'" {
+    is_admin == false
+
     target_columns := {"card_number", "customer_id", "fraud_flag"}
-    target_columns[col_name]
+    target_columns[input.action.resource.column.columnName]
 }
 
-# If NOT admin, but NOT a sensitive column, return the column name itself
-get_mask_expression(false, col_name) = col_name {
-    target_columns := {"card_number", "customer_id", "fraud_flag"}
-    not target_columns[col_name]
+is_admin := true {
+    input.context.identity.user == "admin"
 }
 
-is_admin {
-  input.context.identity.user == "admin"
+is_admin := false {
+    input.context.identity.user != "admin"
 }
