@@ -76,27 +76,21 @@ row_filters[{"expression": expr}] {
 }
 
 ############################
-# COLUMN MASKS (TRINO + OPAL SAFE)
+# COLUMN MASKS (single rule, admin bypass)
 ############################
 
-# Non-admin → produce masks
 column_masks[{"expression": expr}] {
     input.action.operation == "GetColumnMask"
-    is_admin == false
+
+    # Admin bypass → skip producing masks
+    not is_admin
 
     col := input.action.resource.column.columnName
 
+    # Masks for specific columns
     expr := {
         "card_number": "concat('****-****-****-', substr(card_number, length(card_number)-3, 4))",
         "customer_id": "to_hex(sha256(cast(customer_id as varchar)))",
         "fraud_flag": "NULL"
     }[col]
-}
-
-# Admin → never produces anything
-# Rule head has no variables → safe, produces empty array
-column_masks {
-    input.action.operation == "GetColumnMask"
-    is_admin == true
-    false
 }
