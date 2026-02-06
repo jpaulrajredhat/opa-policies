@@ -6,6 +6,8 @@ import future.keywords.in
 
 default allow = false
 
+# 1. Provide a default so 'not is_admin' is predictable
+default is_admin := false
 
 # --- 1. Enhanced Table-to-Column Mapping ---
 # Format: "catalogName.schemaName.tableName": "filterColumn"
