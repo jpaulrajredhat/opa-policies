@@ -2,24 +2,23 @@ package sovereign.data_access
 
 # This is required for the "some group in ..." syntax
 import future.keywords.in
+import future.keywords.if
 
 default allow = false
 
-# --- 1. Table-to-Column Mapping ---
-# Define which column should be used for filtering on each table
-# Format: "tableName": "filterColumn"
+
+# --- 1. Enhanced Table-to-Column Mapping ---
+# Format: "catalogName.schemaName.tableName": "filterColumn"
 table_filter_columns := {
-    # "loans": "region",
-    # "us_customers": "property_state",
-    # "eu_transactions": "country_code"
-    "credit_card_transactions_combined": "region"
-    
+    # "iceberg.single_family.loans": "region",
+    "postgresql.public.credit_card_transactions_combined": "region"
+    # "mysql.sales.customers": "state"
 }
 
 # --- Helpers ---
 is_read { input.action.operation == "SelectFromColumns" }
 is_execute { input.action.operation == "ExecuteQuery" }
-# is_metadata { input.action.operation == "AccessCatalog" }
+
 is_metadata { 
     
     ops := {
@@ -44,40 +43,28 @@ allow {
   startswith(group, "/fraud")
 }
 
-# --- Sovereign Row Filter ---
-# row_filter = expr {
-#    is_read
-#    # 1. Find the group that contains the region (e.g., "/fraud/IN")
-#    some group in input.context.identity.groups
-#    startswith(group, "/fraud/")
-    
-#    # 2. Extract "IN" by splitting "/fraud/IN" into ["", "fraud", "IN"]
-#    parts := split(group, "/")
-#    region := parts[2] 
-    
-#   # 3. Apply the filter
-#    expr := sprintf("region = '%s'", [region])
-#}
-
-# ---  Dynamic Row Filter ---
-row_filter = expr {
+# --- Multiple Catalog Row Filter ---
+row_filters contains {"expression": expr} if {
     is_read
     
-    # A) Identify the table being queried
-    table_name := input.action.resource.table.tableName
+    # A) Construct the full path from the Trino resource object
+    # Based on your log: input.action.resource.table.catalogName, etc.
+    res := input.action.resource.table
+    full_path := sprintf("%s.%s.%s", [res.catalogName, res.schemaName, res.tableName])
     
-    # B) Get the correct column for this table from our map
-    filter_column := table_filter_columns[table_name]
+    # B) Lookup the column for THIS specific catalog/table
+    filter_column := table_filter_columns[full_path]
     
-    # C) Extract the region value from the group (e.g., "/fraud/IN" -> "IN")
+    # C) Extract region (e.g., "/fraud/IN" -> "IN")
     some group in input.context.identity.groups
     startswith(group, "/fraud/")
     parts := split(group, "/")
     region_value := parts[2]
     
-    # D) Build the SQL: "region = 'IN'" or "property_state = 'IN'"
+    # D) Build the SQL
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
+
 # --- Column Masking ---
 column_mask["amount"] = "NULL" {
     is_read
