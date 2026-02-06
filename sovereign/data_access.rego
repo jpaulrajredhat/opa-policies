@@ -75,14 +75,8 @@ row_filters[{"expression": expr}] {
     expr := sprintf("%s = '%s'", [filter_column, region_value])
 }
 
-# Admin → empty list (no masks)
-column_masks := [] {
-    input.action.operation == "GetColumnMask"
-    is_admin == true
-}
-
-# Non-admin → masked columns
-column_masks := [{"expression": expr}] {
+# Non-admin → masked columns (partial rule)
+column_masks[{"expression": expr}] {
     input.action.operation == "GetColumnMask"
     is_admin == false
 
@@ -93,4 +87,12 @@ column_masks := [{"expression": expr}] {
         "customer_id": "to_hex(sha256(cast(customer_id as varchar)))",
         "fraud_flag": "NULL"
     }[col]
+}
+
+# Admin → partial rule that never matches, produces empty array automatically
+# Trino will receive {"result":[]} from OPA
+column_masks[{"expression": expr}] {
+    input.action.operation == "GetColumnMask"
+    is_admin == true
+    false
 }
