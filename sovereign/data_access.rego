@@ -84,8 +84,12 @@ target_columns := {"card_number", "customer_id"}
 column_masks := {"expression": "'****'"} {
     # IF: It's a masking request
     input.action.operation == "GetColumnMask"
-    
+
+    # --- ADD THIS LINE ---
+    # Do not attempt to mask internal hidden columns starting with $
+    not startswith(input.action.resource.column.columnName, "$")
     # AND: The user is NOT an admin
+
     not is_admin 
 
     # AND: The column is in our sensitive list
