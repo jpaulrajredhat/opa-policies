@@ -99,6 +99,10 @@ column_masks := {"expression": "'****'"} {
     # ELSE: Return the original column name (Identity Mask)
     # This block runs for Admins OR for non-sensitive columns
     input.action.operation == "GetColumnMask"
+
+    # DO NOT return a mask for system columns (Return Undefined/Null)
+    not is_system_col(input.action.resource.column.columnName)
+
     col_name := input.action.resource.column.columnName
 }
 
