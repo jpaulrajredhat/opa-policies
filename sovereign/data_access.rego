@@ -35,7 +35,7 @@ is_metadata {
         "AccessCatalog", "AccessSchema", "AccessTable", 
         "FilterCatalogs", "FilterSchemas", "FilterTables",
         "ShowCatalogs", "ShowSchemas", "ShowTables",
-        "DropTable",CreateSchema
+        "DropTable","CreateSchema","CreateTable"
     }
     ops[input.action.operation]
 }
