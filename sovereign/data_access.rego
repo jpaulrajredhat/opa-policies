@@ -100,8 +100,9 @@ column_masks := {"expression": "'****'"} {
     # This block runs for Admins OR for non-sensitive columns
     input.action.operation == "GetColumnMask"
 
-    # DO NOT return a mask for system columns (Return Undefined/Null)
-    not is_system_col(input.action.resource.column.columnName)
+    # Skip system columns here too (CRITICAL)
+    # This prevents OPA from returning {"expression": "$partition"}
+    not startswith(input.action.resource.column.columnName, "$")
 
     col_name := input.action.resource.column.columnName
 }
