@@ -78,34 +78,31 @@ row_filters[{"expression": expr}] {
 #  Define the sensitive columns
 target_columns := {"card_number", "customer_id"}
 
-#  Complete Column Masking Logic using 'else'
-# This rule is "Complete" (assigned with :=), so only one block will ever run.
-
+# 1. Masking Rule: Only for sensitive columns, and NOT system columns
 column_masks := {"expression": "'****'"} {
-    # IF: It's a masking request
     input.action.operation == "GetColumnMask"
-
-    # --- ADD THIS LINE ---
-    # Do not attempt to mask internal hidden columns starting with $
-    not startswith(input.action.resource.column.columnName, "$")
-    # AND: The user is NOT an admin
-
-    not is_admin 
-
-    # AND: The column is in our sensitive list
+    not is_admin
     target_columns[input.action.resource.column.columnName]
-
-} else := {"expression": col_name} {
-    # ELSE: Return the original column name (Identity Mask)
-    # This block runs for Admins OR for non-sensitive columns
-    input.action.operation == "GetColumnMask"
-
-    # Skip system columns here too (CRITICAL)
-    # This prevents OPA from returning {"expression": "$partition"}
     not startswith(input.action.resource.column.columnName, "$")
-
-    col_name := input.action.resource.column.columnName
 }
 
-#  Optional: Default to null for non-masking operations
+# 2. Identity Rule: Only for non-sensitive columns, and NOT system columns
+column_masks := {"expression": col_name} {
+    input.action.operation == "GetColumnMask"
+    col_name := input.action.resource.column.columnName
+    
+    # Do not mask if it's a system column
+    not startswith(col_name, "$")
+    
+    # Run this block if it's NOT a sensitive column OR if the user IS an admin
+    # This logic replaces the 'else' keyword
+    is_identity_needed(col_name)
+}
+
+is_identity_needed(col) { not target_columns[col] }
+is_identity_needed(col) { is_admin }
+
+# 3. CRITICAL DEFAULT
+# If the column is $partition, none of the above rules match.
+# OPA returns 'undefined', which is exactly what Trino needs to proceed.
 default column_masks := null
