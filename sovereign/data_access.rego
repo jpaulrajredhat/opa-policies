@@ -38,7 +38,7 @@ is_execute { input.action.operation == "ExecuteQuery" }
 is_metadata { 
     
     ops := {
-        "AccessCatalog", "AccessSchema", "AccessTable", 
+        "AccessCatalog", "AccessSchema", "AccessTable", "DescribeTable",
         "FilterCatalogs", "FilterSchemas", "FilterTables", "FilterColumns",
         "ShowCatalogs", "ShowSchemas", "ShowTables", "ShowColumns",
         "DropTable","DropSchema","CreateSchema","CreateTable","InsertIntoTable"
