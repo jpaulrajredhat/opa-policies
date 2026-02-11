@@ -15,9 +15,6 @@ is_system_col(name) { startswith(name, "$") }
 # --- 2. Base Access Control ---
 default allow := false
 
-allow {
-    input.action.operation in {"ShowColumns", "FilterColumns", "AccessTable", "DescribeTable", "AccessCatalog", "AccessSchema"}
-}
 # Power Rule: Admin can do anything (prevents "Access Denied" on metadata/procedures)
 allow if is_admin
 
@@ -32,7 +29,8 @@ table_filter_columns := {
 # --- Helpers ---
 # is_read { input.action.operation == "SelectFromColumns" }
 is_read { 
-    ops := {"SelectFromColumns", "GetRowFilters"}
+    # ops := {"SelectFromColumns", "GetRowFilters"}
+    ops := {SelectFromColumns", "GetRowFilters","ShowColumns", "FilterColumns", "AccessTable", "DescribeTable", "AccessCatalog", "AccessSchema"}
     ops[input.action.operation]
 }
 is_execute { input.action.operation == "ExecuteQuery" }
