@@ -34,7 +34,7 @@ is_metadata {
     ops := {
         "AccessCatalog", "AccessSchema", "AccessTable", 
         "FilterCatalogs", "FilterSchemas", "FilterTables",
-        "ShowCatalogs", "ShowSchemas", "ShowTables",
+        "ShowCatalogs", "ShowSchemas", "ShowTables", "ShowColumns",
         "DropTable","DropSchema","CreateSchema","CreateTable","InsertIntoTable"
     }
     ops[input.action.operation]
