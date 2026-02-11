@@ -30,7 +30,7 @@ table_filter_columns := {
 # is_read { input.action.operation == "SelectFromColumns" }
 is_read { 
     # ops := {"SelectFromColumns", "GetRowFilters"}
-    ops := {SelectFromColumns", "GetRowFilters","ShowColumns", "FilterColumns", "AccessTable", "DescribeTable", "AccessCatalog", "AccessSchema"}
+    ops := {"SelectFromColumns", "GetRowFilters","ShowColumns", "FilterColumns", "AccessTable", "DescribeTable", "AccessCatalog", "AccessSchema"}
     ops[input.action.operation]
 }
 is_execute { input.action.operation == "ExecuteQuery" }
