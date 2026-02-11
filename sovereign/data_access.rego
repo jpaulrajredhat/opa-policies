@@ -86,21 +86,20 @@ column_masks := {"expression": "'****'"} {
     not startswith(input.action.resource.column.columnName, "$")
 }
 
-# 2. Identity Rule: Only for non-sensitive columns, and NOT system columns
+# 2. Identity Rule: ONLY for non-admins on non-sensitive columns
 column_masks := {"expression": col_name} {
     input.action.operation == "GetColumnMask"
     col_name := input.action.resource.column.columnName
     
-    # Do not mask if it's a system column
+    # Do NOT return a mask for admins (Important!)
+    not is_admin
+    
+    # Do NOT return a mask for system columns
     not startswith(col_name, "$")
     
-    # Run this block if it's NOT a sensitive column OR if the user IS an admin
-    # This logic replaces the 'else' keyword
-    is_identity_needed(col_name)
+    # Only for non-sensitive data
+    not target_columns[col_name]
 }
-
-is_identity_needed(col) { not target_columns[col] }
-is_identity_needed(col) { is_admin }
 
 # 3. CRITICAL DEFAULT
 # If the column is $partition, none of the above rules match.
