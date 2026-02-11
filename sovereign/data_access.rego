@@ -16,7 +16,7 @@ is_system_col(name) { startswith(name, "$") }
 default allow := false
 
 # Power Rule: Admin can do anything (prevents "Access Denied" on metadata/procedures)
-allow if is_admin
+# allow if is_admin
 
 # --- 1. Enhanced Table-to-Column Mapping ---
 # Format: "catalogName.schemaName.tableName": "filterColumn"
