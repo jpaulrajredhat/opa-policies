@@ -4,14 +4,19 @@ package sovereign.data_access
 import future.keywords.in
 # import future.keywords.if
 
-default allow = false
-
-# 1. Provide a default so 'not is_admin' is predictable
+# --- 1. Identity & Helpers ---
 default is_admin := false
-is_admin := true {
+is_admin {
     input.context.identity.user == "admin"
 }
 
+is_system_col(name) { startswith(name, "$") }
+
+# --- 2. Base Access Control ---
+default allow := false
+
+# Power Rule: Admin can do anything (prevents "Access Denied" on metadata/procedures)
+allow if is_admin
 
 # --- 1. Enhanced Table-to-Column Mapping ---
 # Format: "catalogName.schemaName.tableName": "filterColumn"
@@ -78,26 +83,20 @@ row_filters[{"expression": expr}] {
 #  Define the sensitive columns
 target_columns := {"card_number", "customer_id"}
 
-# 1. Masking Rule: Only for sensitive columns, and NOT system columns
+# Rule: Mask sensitive data only for non-admins during SELECTs
 column_masks := {"expression": "'****'"} {
     input.action.operation == "GetColumnMask"
     not is_admin
+    not is_system_col(input.action.resource.column.columnName)
     target_columns[input.action.resource.column.columnName]
-    not startswith(input.action.resource.column.columnName, "$")
 }
 
-# 2. Identity Rule: ONLY for non-admins on non-sensitive columns
+# Rule: Identity mask for safe columns (Non-admins only)
 column_masks := {"expression": col_name} {
     input.action.operation == "GetColumnMask"
     col_name := input.action.resource.column.columnName
-    
-    # Do NOT return a mask for admins (Important!)
     not is_admin
-    
-    # Do NOT return a mask for system columns
-    not startswith(col_name, "$")
-    
-    # Only for non-sensitive data
+    not is_system_col(col_name)
     not target_columns[col_name]
 }
 
