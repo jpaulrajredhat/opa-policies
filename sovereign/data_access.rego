@@ -15,7 +15,10 @@ is_fraud_domain {
     # Replace 'fraud_catalog' with your actual Trino catalog name
     input.action.resource.table.catalogName == "postgres"
 }
-
+is_mortgage_domain {
+    # Replace 'mortgage_catalog' with your actual Trino catalog name
+    input.action.resource.table.catalogName == "iceberg"
+}
 is_system_col(name) { startswith(name, "$") }
 
 # --- 2. Base Access Control ---
@@ -66,6 +69,16 @@ allow {
   # Checks if any group is exactly "/fraud" or starts with "/fraud/"
   some group in input.context.identity.groups
   startswith(group, "/fraud")
+}
+
+# Rule 2: Mortgage group ONLY allowed to access Mortgage catalog (US only)
+allow {
+    is_mortgage_domain
+    # Keycloak attributes usually come under input.context.identity.extra
+    # depending on your Trino/Keycloak mapper setup
+    # input.context.identity.extra.country == "US"
+    some group in input.context.identity.groups
+    startswith(group, "/mortgage")
 }
 
 # --- Multiple Catalog Row Filter ---
