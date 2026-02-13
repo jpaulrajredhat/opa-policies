@@ -10,6 +10,12 @@ is_admin {
     input.context.identity.user == "admin"
 }
 
+# Define helpers to identify domains based on Trino catalogs/schemas
+is_fraud_domain {
+    # Replace 'fraud_catalog' with your actual Trino catalog name
+    input.action.resource.table.catalogName == "postgres"
+}
+
 is_system_col(name) { startswith(name, "$") }
 
 # --- 2. Base Access Control ---
@@ -51,7 +57,10 @@ allow { is_execute }
 allow { is_metadata }
 
 allow {
+
+  is_fraud_domain
   is_read
+  
   # Matches any group starting with /fraud
   # startswith(input.context.identity.groups[_], "/fraud")
   # Checks if any group is exactly "/fraud" or starts with "/fraud/"
