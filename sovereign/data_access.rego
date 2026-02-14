@@ -74,6 +74,7 @@ allow {
 # Rule 2: Mortgage group ONLY allowed to access Mortgage catalog (US only)
 allow {
     is_mortgage_domain
+    is_read
     # Keycloak attributes usually come under input.context.identity.extra
     # depending on your Trino/Keycloak mapper setup
     # input.context.identity.extra.country == "US"
