@@ -126,17 +126,17 @@ column_masks := null {
 
 # Rule: Mask sensitive data only for non-admins during SELECTs
 column_masks := {"expression": "'****'"} {
-    input.action.operation == "GetColumnMask"
     not is_admin
+    input.action.operation == "GetColumnMask"
     not is_system_col(input.action.resource.column.columnName)
     target_columns[input.action.resource.column.columnName]
 }
 
-# Rule: Identity mask for safe columns (Non-admins only)
+# If NOT admin and NOT a sensitive column, return the column name (Identity mask)
 column_masks := {"expression": col_name} {
+    not is_admin
     input.action.operation == "GetColumnMask"
     col_name := input.action.resource.column.columnName
-    not is_admin
     not is_system_col(col_name)
     not target_columns[col_name]
 }
