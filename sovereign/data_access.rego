@@ -120,28 +120,37 @@ row_filters[{"expression": expr}] {
 #  Define the sensitive columns
 target_columns := {"card_number", "customer_id"}
 
+
+# 1. NEW: Disable masks for ALL users during an INSERT 
+# (This allows the mortgage user to write data)
+column_masks := null {
+    # Check if the overall query is an Insert
+    # Note: Depending on your Trino version, you may need to check 
+    # input.context.query.queryText for "INSERT" or use this operation check:
+    input.action.operation == "InsertIntoTable"
+}
+
+# 2. Power Rule: Admins always get null (Keep this for safety)
 column_masks := null {
     is_admin
 }
 
-# Rule: Mask sensitive data only for non-admins during SELECTs
+# 3. Masking Rule (ONLY for Selects)
 column_masks := {"expression": "'****'"} {
     not is_admin
     input.action.operation == "GetColumnMask"
-    not is_system_col(input.action.resource.column.columnName)
     target_columns[input.action.resource.column.columnName]
 }
 
-# If NOT admin and NOT a sensitive column, return the column name (Identity mask)
+# 4. Identity Mask (ONLY for Selects - This was your current failure)
 column_masks := {"expression": col_name} {
     not is_admin
     input.action.operation == "GetColumnMask"
     col_name := input.action.resource.column.columnName
-    not is_system_col(col_name)
+    # Ensure we don't return an expression if we are inserting!
+    not input.action.operation == "InsertIntoTable" 
     not target_columns[col_name]
 }
 
-# 3. CRITICAL DEFAULT
-# If the column is $partition, none of the above rules match.
-# OPA returns 'undefined', which is exactly what Trino needs to proceed.
+# 5. Default Fallback
 default column_masks := null
