@@ -9,6 +9,11 @@ default is_admin := false
 is_admin {
     input.context.identity.user == "admin"
 }
+# 2. Power Rule: If admin, allow EVERYTHING immediately
+# This bypasses the information_schema checks and domain restrictions
+allow {
+    is_admin
+}
 # This allows Trino to read its own internal column/table definitions
 is_system_metadata {
     input.action.resource.table.schema in {"information_schema", "system"}
