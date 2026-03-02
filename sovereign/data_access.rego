@@ -13,6 +13,12 @@ is_admin {
 is_system_metadata {
     input.action.resource.table.schema in {"information_schema", "system"}
 }
+
+allow {
+    is_read
+    is_system_metadata
+}
+
 # Define helpers to identify domains based on Trino catalogs/schemas
 is_fraud_domain {
     # Replace 'fraud_catalog' with your actual Trino catalog name
