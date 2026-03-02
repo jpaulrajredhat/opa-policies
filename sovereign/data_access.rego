@@ -9,7 +9,10 @@ default is_admin := false
 is_admin {
     input.context.identity.user == "admin"
 }
-
+# This allows Trino to read its own internal column/table definitions
+is_system_metadata {
+    input.action.resource.table.schema in {"information_schema", "system"}
+}
 # Define helpers to identify domains based on Trino catalogs/schemas
 is_fraud_domain {
     # Replace 'fraud_catalog' with your actual Trino catalog name
