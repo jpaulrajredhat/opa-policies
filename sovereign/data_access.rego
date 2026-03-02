@@ -120,6 +120,10 @@ row_filters[{"expression": expr}] {
 #  Define the sensitive columns
 target_columns := {"card_number", "customer_id"}
 
+column_masks := null {
+    is_admin
+}
+
 # Rule: Mask sensitive data only for non-admins during SELECTs
 column_masks := {"expression": "'****'"} {
     input.action.operation == "GetColumnMask"
