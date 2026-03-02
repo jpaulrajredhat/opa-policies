@@ -121,36 +121,37 @@ row_filters[{"expression": expr}] {
 target_columns := {"card_number", "customer_id"}
 
 
-# 1. NEW: Disable masks for ALL users during an INSERT 
-# (This allows the mortgage user to write data)
+# --- 1. The "Write Bypass" Rule ---
+# This allows the mortgage user to perform INSERTs without masking errors.
 column_masks := null {
-    # Check if the overall query is an Insert
-    # Note: Depending on your Trino version, you may need to check 
-    # input.context.query.queryText for "INSERT" or use this operation check:
-    input.action.operation == "InsertIntoTable"
-}
-
-# 2. Power Rule: Admins always get null (Keep this for safety)
-column_masks := null {
+    # If the user is admin OR if this is an Insert operation, return null.
     is_admin
 }
 
-# 3. Masking Rule (ONLY for Selects)
+column_masks := null {
+    # Some Trino versions check metadata during Insert; this ensures no mask is returned.
+    input.action.operation == "InsertIntoTable"
+}
+
+# --- 2. The Sensitive Mask (Only for READS/SELECTS) ---
 column_masks := {"expression": "'****'"} {
     not is_admin
     input.action.operation == "GetColumnMask"
+    # Ensure we don't trigger this during an INSERT
+    not input.action.operation == "InsertIntoTable"
     target_columns[input.action.resource.column.columnName]
 }
 
-# 4. Identity Mask (ONLY for Selects - This was your current failure)
+# --- 3. The Identity Mask (Only for READS/SELECTS) ---
+# This was the rule causing your specific failure!
 column_masks := {"expression": col_name} {
     not is_admin
     input.action.operation == "GetColumnMask"
+    not input.action.operation == "InsertIntoTable"
     col_name := input.action.resource.column.columnName
-    # Ensure we don't return an expression if we are inserting!
-    not input.action.operation == "InsertIntoTable" 
     not target_columns[col_name]
+    not is_system_col(col_name)
 }
 
-# 5. Default Fallback
+# --- 4. Final Default ---
 default column_masks := null
