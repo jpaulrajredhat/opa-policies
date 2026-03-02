@@ -121,37 +121,26 @@ row_filters[{"expression": expr}] {
 target_columns := {"card_number", "customer_id"}
 
 
-# --- 1. The "Write Bypass" Rule ---
-# This allows the mortgage user to perform INSERTs without masking errors.
+# 1. Admin Rule (Forces a clean null)
 column_masks := null {
-    # If the user is admin OR if this is an Insert operation, return null.
     is_admin
 }
 
-column_masks := null {
-    # Some Trino versions check metadata during Insert; this ensures no mask is returned.
-    input.action.operation == "InsertIntoTable"
-}
-
-# --- 2. The Sensitive Mask (Only for READS/SELECTS) ---
+# 2. Sensitive Data Masking (ONLY if NOT admin)
 column_masks := {"expression": "'****'"} {
-    not is_admin
+    not is_admin  # This prevents conflict when user is admin
     input.action.operation == "GetColumnMask"
-    # Ensure we don't trigger this during an INSERT
-    not input.action.operation == "InsertIntoTable"
     target_columns[input.action.resource.column.columnName]
 }
 
-# --- 3. The Identity Mask (Only for READS/SELECTS) ---
-# This was the rule causing your specific failure!
+# 3. Identity Mask (ONLY if NOT admin AND NOT sensitive)
 column_masks := {"expression": col_name} {
-    not is_admin
+    not is_admin  # This prevents conflict when user is admin
     input.action.operation == "GetColumnMask"
-    not input.action.operation == "InsertIntoTable"
     col_name := input.action.resource.column.columnName
     not target_columns[col_name]
     not is_system_col(col_name)
 }
 
-# --- 4. Final Default ---
+# 4. Default Fallback
 default column_masks := null
