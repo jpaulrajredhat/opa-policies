@@ -19,6 +19,10 @@ allow {
     is_system_metadata
 }
 
+allow {
+    input.action.operation == "AccessCatalog"
+}
+
 # Define helpers to identify domains based on Trino catalogs/schemas
 is_fraud_domain {
     # Replace 'fraud_catalog' with your actual Trino catalog name
