@@ -48,6 +48,7 @@ allow {
 is_fraud_domain {
     # Replace 'fraud_catalog' with your actual Trino catalog name
     input.action.resource.table.catalogName == "postgres"
+    input.context.identity.user == "admin"
 }
 is_mortgage_domain {
     # Replace 'mortgage_catalog' with your actual Trino catalog name
