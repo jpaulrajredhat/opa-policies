@@ -9,6 +9,21 @@ default is_admin := false
 is_admin {
     input.context.identity.user == "admin"
 }
+is_metadata { 
+    
+    ops := {
+        "AccessCatalog", "AccessSchema", "AccessTable", "DescribeTable",
+        "FilterCatalogs", "FilterSchemas", "FilterTables", "FilterColumns",
+        "ShowCatalogs", "ShowSchemas", "ShowTables", "ShowColumns",
+        "DropTable","DropSchema","CreateSchema","CreateTable","InsertIntoTable"
+    }
+    ops[input.action.operation]
+}
+#  Metadata access (Ensure admin can see table structures)
+allow {
+    input.context.identity.user == "admin"
+    is_metadata
+}
 # 2. Power Rule: If admin, allow EVERYTHING immediately
 # This bypasses the information_schema checks and domain restrictions
 allow {
@@ -62,16 +77,7 @@ is_read {
 }
 is_execute { input.action.operation == "ExecuteQuery" }
 
-is_metadata { 
-    
-    ops := {
-        "AccessCatalog", "AccessSchema", "AccessTable", "DescribeTable",
-        "FilterCatalogs", "FilterSchemas", "FilterTables", "FilterColumns",
-        "ShowCatalogs", "ShowSchemas", "ShowTables", "ShowColumns",
-        "DropTable","DropSchema","CreateSchema","CreateTable","InsertIntoTable"
-    }
-    ops[input.action.operation]
-}
+
 
 # --- Base Access ---
 allow { is_execute }
