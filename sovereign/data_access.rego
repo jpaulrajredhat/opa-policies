@@ -6,6 +6,7 @@ import future.keywords.in
 
 # --- 1. Identity & Helpers ---
 default is_admin := false
+
 is_admin {
     input.context.identity.user == "admin"
 }
@@ -54,8 +55,6 @@ is_mortgage_domain {
 }
 is_system_col(name) { startswith(name, "$") }
 
-# --- 2. Base Access Control ---
-default allow := false
 
 # Power Rule: Admin can do anything (prevents "Access Denied" on metadata/procedures)
 # allow if is_admin
